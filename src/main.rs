@@ -7,20 +7,6 @@ const INCREAMENT_SPEED: f64 = 0.6;
 const ROTATE_X_SPEED: f64 = 0.04;
 const ROTATE_Y_SPEED: f64 = 0.04;
 const ROTATE_Z_SPEED: f64 = 0.04;
-/// float calculateX(int i, int j, int k) {
-/// return j * sin(A) * sin(B) * cos(C) - k * cos(A) * sin(B) * cos(C) +
-/// j * cos(A) * sin(C) + k * sin(A) * sin(C) + i * cos(B) * cos(C);
-/// }
-
-/// float calculateY(int i, int j, int k) {
-/// return j * cos(A) * cos(C) + k * sin(A) * cos(C) -
-/// j * sin(A) * sin(B) * sin(C) + k * cos(A) * sin(B) * sin(C) -
-/// i * cos(B) * sin(C);
-/// }
-
-/// float calculateZ(int i, int j, int k) {
-/// return k * cos(A) * cos(B) - j * sin(A) * cos(B) + i * sin(B);
-/// }
 
 fn rotate_x(x: f64, y: f64, z: f64, a: f64, b: f64, c: f64) -> f64 {
     let (sina, cosa) = f64::sin_cos(a);
