@@ -1,12 +1,12 @@
 // Define the screen and speed of rotations around x, y, z axises
 const SCREEN_H: usize = 80;
 const SCREEN_W: usize = 160;
-const HALF_KSIZE: f64 = 20.0;
+const HALF_CUBE_SIZE: f64 = 20.0;
 const K1: usize = 40;
 const INCREAMENT_SPEED: f64 = 0.6;
-const ROTATE_X_SPEED: f64 = 0.04;
-const ROTATE_Y_SPEED: f64 = 0.04;
-const ROTATE_Z_SPEED: f64 = 0.04;
+const ROTATE_AROUND_X_AXIS_SPEED: f64 = 0.04;
+const ROTATE_AROUND_Y_AXIS_SPEED: f64 = 0.04;
+const ROTATE_AROUND_Z_AXIS_SPEED: f64 = 0.04;
 
 fn rotate_x(x: f64, y: f64, z: f64, a: f64, b: f64, c: f64) -> f64 {
     let (sina, cosa) = f64::sin_cos(a);
@@ -33,17 +33,13 @@ fn rotate_z(x: f64, y: f64, z: f64, a: f64, b: f64, c: f64) -> f64 {
     return z * cosa * cosb - y * sina * cosb + x * sinb;
 }
 
-//This require update 2d array from a function in RUST, very tricky
-fn update<V: AsMut<[f64]>, K: AsMut<[char]>>(
+//This require set_character_at_coordinate 2d array from a function in RUST, very tricky
+fn set_character_at_coordinate<V: AsMut<[f64]>, K: AsMut<[char]>>(
     ch: char,
     zbuffer: &mut [V],
     output: &mut [K],
     (x, y, ooz, idx): (usize, usize, f64, usize),
 ) {
-    // if x < SCREEN_H as usize && y < SCREEN_W as usize {
-    // output[x].as_mut()[y] = ch;
-    // }
-
     //Add luminance effect to the kube
     if idx > 0
         && idx < (SCREEN_H * SCREEN_W) as usize
@@ -71,8 +67,8 @@ fn calculate_for_surface(
     let z = rotate_z(cx, cy, cz, a, b, c) + distance_from_eyes;
 
     let ooz = 1.0 / z;
-    let xp = (30.0 + HALF_KSIZE + K1 as f64 * ooz * x) as usize;
-    let yp = (30.0 + HALF_KSIZE + K1 as f64 * ooz * y) as usize;
+    let xp = (30.0 + HALF_CUBE_SIZE + K1 as f64 * ooz * x) as usize;
+    let yp = (30.0 + HALF_CUBE_SIZE + K1 as f64 * ooz * y) as usize;
     let idx = xp + yp * SCREEN_W;
     return (xp, yp, ooz, idx);
 }
@@ -82,44 +78,37 @@ fn main() {
     let mut a = 0.0;
     let mut b = 0.0;
     let mut c = 0.0;
-    loop {
+   loop {
         let mut output = [[' '; SCREEN_W]; SCREEN_H]; //SCREEN
         let mut zbuffer = [[0.0; SCREEN_W]; SCREEN_H]; //SCREEN
-        let mut cx = -HALF_KSIZE;
-        while cx < HALF_KSIZE {
-            let mut cy = -HALF_KSIZE;
-            while cy < HALF_KSIZE {
+        let mut cx = -HALF_CUBE_SIZE;
+        while cx < HALF_CUBE_SIZE {
+            let mut cy = -HALF_CUBE_SIZE;
+            while cy < HALF_CUBE_SIZE {
                 // Start calculate 6 surfaces of Kube
-                let (x, y, ooz, idx) = calculate_for_surface(cx, cy, -HALF_KSIZE, a, b, c); // a, b, c are angles of rotations
-                                                                                            // Update the the screen with character use about output
-                update('.', &mut zbuffer, &mut output, (x, y, ooz, idx));
+                let (x, y, ooz, idx) = calculate_for_surface(cx, cy, -HALF_CUBE_SIZE, a, b, c); // a, b, c are angles of rotations
+                set_character_at_coordinate('.', &mut zbuffer, &mut output, (x, y, ooz, idx));
 
-                let (x, y, ooz, idx) = calculate_for_surface(cx, cy, HALF_KSIZE, a, b, c); // a, b, c are angles of rotations
-                                                                                           // Update the the screen with character use about output
-                update('#', &mut zbuffer, &mut output, (x, y, ooz, idx));
+                let (x, y, ooz, idx) = calculate_for_surface(cx, cy, HALF_CUBE_SIZE, a, b, c); 
+                set_character_at_coordinate('#', &mut zbuffer, &mut output, (x, y, ooz, idx));
+                
+                let (x, y, ooz, idx) = calculate_for_surface(HALF_CUBE_SIZE, cx, cy, a, b, c);
+                set_character_at_coordinate('$', &mut zbuffer, &mut output, (x, y, ooz, idx));
+                
+                let (x, y, ooz, idx) = calculate_for_surface(-HALF_CUBE_SIZE, cx, cy, a, b, c);
+                set_character_at_coordinate('~', &mut zbuffer, &mut output, (x, y, ooz, idx));
+                
+                let (x, y, ooz, idx) = calculate_for_surface(cx, HALF_CUBE_SIZE, cy, a, b, c);
+                set_character_at_coordinate(';', &mut zbuffer, &mut output, (x, y, ooz, idx));
 
-                let (x, y, ooz, idx) = calculate_for_surface(HALF_KSIZE, cx, cy, a, b, c); // a, b, c are angles of rotations
-                                                                                           // Update the the screen with character use about output
-                update('$', &mut zbuffer, &mut output, (x, y, ooz, idx));
-
-                let (x, y, ooz, idx) = calculate_for_surface(-HALF_KSIZE, cx, cy, a, b, c); // a, b, c are angles of rotations
-                                                                                            // Update the the screen with character use about output
-                update('~', &mut zbuffer, &mut output, (x, y, ooz, idx));
-
-                let (x, y, ooz, idx) = calculate_for_surface(cx, HALF_KSIZE, cy, a, b, c); // a, b, c are angles of rotations
-                                                                                           // Update the the screen with character use about output
-                update(';', &mut zbuffer, &mut output, (x, y, ooz, idx));
-
-                let (x, y, ooz, idx) = calculate_for_surface(cx, -HALF_KSIZE, cy, a, b, c); // a, b, c are angles of rotations
-                                                                                            // Update the the screen with character use about output
-                update('+', &mut zbuffer, &mut output, (x, y, ooz, idx));
+                let (x, y, ooz, idx) = calculate_for_surface(cx, -HALF_CUBE_SIZE, cy, a, b, c);
+                set_character_at_coordinate('+', &mut zbuffer, &mut output, (x, y, ooz, idx));
 
                 cy += INCREAMENT_SPEED;
             }
             cx += INCREAMENT_SPEED;
         }
 
-        //SHow to SCREEN
         print!("\x1b[H"); //clear screen
         for i in 0..SCREEN_H as usize {
             for j in 0..SCREEN_W as usize {
@@ -128,9 +117,9 @@ fn main() {
             print!("\n");
         }
 
-        a += ROTATE_X_SPEED;
-        b += ROTATE_Y_SPEED;
-        c += ROTATE_Z_SPEED;
+        a += ROTATE_AROUND_X_AXIS_SPEED;
+        b += ROTATE_AROUND_Y_AXIS_SPEED;
+        c += ROTATE_AROUND_Z_AXIS_SPEED;
 
         std::thread::sleep(std::time::Duration::new(0, 30000000));
     }
